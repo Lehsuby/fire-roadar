@@ -24,6 +24,7 @@ def get_parser():
     parser.add_argument('--thresh_test', type=float, default=0.85,
                         help='Minimum score threshold (assuming scores in a [0, 1] range);')
     parser.add_argument('--opts', default=[], help='additional params')
+    parser.add_argument('--mode', default="image", help='Type of input file [image, video]')
     return parser
 
 
@@ -170,7 +171,7 @@ def run():
     print(args)
 
     evaluater = Evaluater(args)
-    evaluater.infer(args.input_dir, visualize=False)
+    evaluater.infer(args.input_dir, mode=args.mode, visualize=False)
 
 
 if __name__ == '__main__':
