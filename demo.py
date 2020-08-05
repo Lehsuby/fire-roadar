@@ -5,7 +5,7 @@ import torch
 from tqdm import tqdm
 from datetime import datetime
 
-from src.utils import register_data, get_video_params
+from src.utils import register_data, get_video_params, video_capture, video_writer
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
@@ -144,27 +144,18 @@ class Evaluator:
 
             if mode == "video":
                 video_info = get_video_params(file_path)
-                video = cv2.VideoCapture(str(file_path))
+                with video_capture(str(file_path)) as video:
 
-                output_path = output_path.with_suffix(".mkv")
+                    outputs, vis_output = self.predict(video, mode)
+                    output_path = output_path.with_suffix(".mkv")
 
-                output_file = cv2.VideoWriter(
-                    filename=str(output_path),
-                    fourcc=cv2.VideoWriter_fourcc(*"x264"),
-                    fps=video_info['fps'],
-                    frameSize=(video_info['width'], video_info['height']),
-                    isColor=True,
-                )
+                    with video_writer(str(output_path), video_info) as output_file:
 
-                outputs, vis_output = self.predict(video, mode)
+                        for frame in tqdm(vis_output, total=video_info['num_frames']):
+                            output_file.write(frame)
 
-                for frame in tqdm(vis_output, total=video_info['num_frames']):
-                    output_file.write(frame)
-
-                    if visualize:
-                        visualize_img(video_info['name'], frame, mode)
-                video.release()
-                output_file.release()
+                            if visualize:
+                                visualize_img(video_info['name'], frame, mode)
 
 
 def run():
