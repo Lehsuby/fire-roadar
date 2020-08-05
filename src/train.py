@@ -15,7 +15,7 @@ from detectron2.data import build_detection_test_loader, build_detection_train_l
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
+    parser.add_argument('--batch_size', type=int, default=16, help='input batch size')
     parser.add_argument('--num_workers', type=int, default=8, help='number of data loading workers')
     parser.add_argument('--max_iter', type=int, default=10000, help='number of iterations to train for')
     parser.add_argument('--lr', type=float, default=0.0001, help='start learning rate')
@@ -76,10 +76,6 @@ class Learner:
 
         cfg.SOLVER.CHECKPOINT_PERIOD = self.args.checkpoint_step
         cfg.SOLVER.MAX_ITER = self.args.max_iter
-
-        cfg.SOLVER.IMS_PER_BATCH = 8
-        cfg.SOLVER.STEPS = (1000, 1500)
-        cfg.SOLVER.GAMMA = 0.05
 
         cfg.TEST.EVAL_PERIOD = self.args.eval_step
         cfg.freeze()
