@@ -9,7 +9,7 @@ docker image build -t fire-roadar:test .
 
 ## Initialization
 ```bash
-docker run -it -p 2021:8888 --name fire_testing -v {fitting_room_data}:/data fitting_room/pose_estimation:test
+docker run --rm -it -v {input_data}:/code/data -v {output_folder}:/code/results --name fire-testing fire-roadar:test
 ```
 
 ## Create your own dataset
