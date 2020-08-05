@@ -20,13 +20,12 @@ docker run -it -p 2021:8888 --name fire_testing -v {fitting_room_data}:/data fit
 ## Quick Start
 Run Demo
 ```bash
-python demo --output_dir ./reports --model_path {model_path} --input_dir ./data/train --metadata_dir ./data \
-  --thresh_tes 0.5 --mode image --opts {add_params}
+python demo.py --output_dir ./results --model_path ./reports/logs_2020-08-04_21:26:36/model_0001399.pth \
+--input_dir ./data --thresh_tes 0.9 --mode image --opts {add_params}
 ```
 - --output_dir: output folder
 - --model_path: model path
 - --input_dir: input data folder
-- --metadata_dir: data folder with test dataset
 - --thresh_test: minimum score threshold (assuming scores in a [0, 1] range), like NMS
 - --mode: type of input file [image, video]
 - --opts: additional params
@@ -35,7 +34,7 @@ python demo --output_dir ./reports --model_path {model_path} --input_dir ./data/
 ## Train
 Run trainer
 ```
-python src/train --batch_size 32 --num_workers 4 --max_iter 10000 --lr 0.0001 \
+python src/train.py --batch_size 32 --num_workers 4 --max_iter 10000 --lr 0.0001 \
   --output_dir ../reports --model_path COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml \
   --input_dir ../data --checkpoint_step 200 --eval_step 256 \
   --img_size 256 --opts {add_params}
