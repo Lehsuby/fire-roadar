@@ -17,14 +17,15 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output_dir', type=str, default='./reports', help='output folder')
     parser.add_argument('--model_path', type=str,
-                        default="/data/PycharmProjects/fire-roadar/reports/logs_2020-08-03_23:35:20/model_0000499.pth",
+                        default="./reports/logs_2020-08-04_21:26:36/model_0001399.pth",
                         help='model path')
-    parser.add_argument('--input_dir', type=str, default='./data/train/images', help='input data folder')
+    parser.add_argument('--input_dir', type=str, default='./data/test', help='input data folder')
     parser.add_argument('--metadata_dir', type=str, default='./data', help='data folder with test dataset')
-    parser.add_argument('--thresh_test', type=float, default=0.85,
-                        help='Minimum score threshold (assuming scores in a [0, 1] range);')
-    parser.add_argument('--opts', default=[], help='additional params')
-    parser.add_argument('--mode', default="image", help='Type of input file [image, video]')
+    parser.add_argument('--thresh_test', type=float, default=0.9,
+                        help='Minimum score threshold (assuming scores in a [0, 1] range), like NMS')
+    parser.add_argument('--opts', type=list, default=[], help='additional params')
+    parser.add_argument('--mode', type=str, default="video", help='Type of input file [image, video]')
+    parser.add_argument('--visualize', type=bool, default=False, help='Flag of visualization')
     return parser
 
 
@@ -44,7 +45,7 @@ def visualize_img(window_name: str, img, mode: str):
             break
 
 
-class Evaluater:
+class Evaluator:
     def __init__(self, args, instance_mode=ColorMode.IMAGE):
         self.args = args
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -80,14 +81,13 @@ class Evaluater:
         print(cfg)
         return cfg
 
-    def predict(self, obj, mode: str ="image"):
+    def predict(self, obj, mode: str = "image"):
         # Make prediction
         if mode == "image":
             image = obj[:, :, ::-1]
             image_visualizer = Visualizer(image, self.metadata["validation"],
                                           instance_mode=self.instance_mode, scale=1.2)
             outputs = self.predictor(obj)
-            print(outputs)
             instances = outputs["instances"].to("cpu")
             instances.remove('pred_classes')
             vis_output = image_visualizer.draw_instance_predictions(instances)
@@ -99,10 +99,12 @@ class Evaluater:
                 if success:
                     output = self.predictor(frame)
                     outputs.append(output)
+                    instances = output["instances"].to("cpu")
+                    instances.remove('pred_classes')
 
                     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-                    vis_frame = video_visualizer.draw_instance_predictions(frame, output["instances"].to("cpu"))
+                    vis_frame = video_visualizer.draw_instance_predictions(frame, instances)
                     vis_frame = cv2.cvtColor(vis_frame.get_image(), cv2.COLOR_RGB2BGR)
 
                     vis_output.append(vis_frame)
@@ -170,8 +172,8 @@ def run():
     args = parser.parse_args()
     print(args)
 
-    evaluater = Evaluater(args)
-    evaluater.infer(args.input_dir, mode=args.mode, visualize=False)
+    evaluater = Evaluator(args)
+    evaluater.infer(args.input_dir, mode=args.mode, visualize=args.visualize)
 
 
 if __name__ == '__main__':
