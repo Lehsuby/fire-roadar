@@ -236,8 +236,7 @@ def register_data(data_name: str, data_folder: str, csv_name: str = "data.csv"):
         DatasetCatalog.register(dataset_name, lambda: create_dataset_dicts(df, classes, data_folder))
         MetadataCatalog.get(dataset_name).set(thing_classes=classes)
 
-        metadata[part] = MetadataCatalog.get(dataset_name)
-    return dataset_names, len(classes), metadata
+    return dataset_names, len(classes)
 
 
 @contextmanager

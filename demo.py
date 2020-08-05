@@ -11,6 +11,7 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.utils.video_visualizer import VideoVisualizer
 from detectron2.data.detection_utils import read_image
+from detectron2.data import MetadataCatalog
 
 
 def get_parser():
@@ -20,7 +21,6 @@ def get_parser():
                         default="./reports/logs_2020-08-04_21:26:36/model_0001399.pth",
                         help='model path')
     parser.add_argument('--input_dir', type=str, default='./data/test', help='input data folder')
-    parser.add_argument('--metadata_dir', type=str, default='./data', help='data folder with test dataset')
     parser.add_argument('--thresh_test', type=float, default=0.9,
                         help='Minimum score threshold (assuming scores in a [0, 1] range), like NMS')
     parser.add_argument('--opts', type=list, default=[], help='additional params')
@@ -56,10 +56,9 @@ class Evaluator:
 
         # Data
         print("Load metadata")
-        dataset_names, self.num_classes, self.metadata = register_data("fire", self.args.metadata_dir)
-        self.train_data_name = dataset_names["train"]
-        self.val_data_name = dataset_names["validation"]
-
+        self.dataset_name = "fire_val"
+        MetadataCatalog.get(self.dataset_name).set(thing_classes=["fire"])
+        self.metadata = MetadataCatalog.get(self.dataset_name)
         self.cfg = self.create_cfg()
 
         # Predictor
@@ -73,7 +72,7 @@ class Evaluator:
 
         cfg.MODEL.WEIGHTS = self.args.model_path
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = self.args.thresh_test
-        cfg.DATASETS.TEST = (self.val_data_name,)
+        cfg.DATASETS.TEST = (self.dataset_name,)
 
         cfg.MODEL.DEVICE = self.device
 
@@ -85,14 +84,13 @@ class Evaluator:
         # Make prediction
         if mode == "image":
             image = obj[:, :, ::-1]
-            image_visualizer = Visualizer(image, self.metadata["validation"],
-                                          instance_mode=self.instance_mode, scale=1.2)
+            image_visualizer = Visualizer(image, metadata=self.metadata, instance_mode=self.instance_mode, scale=1.2)
             outputs = self.predictor(obj)
             instances = outputs["instances"].to("cpu")
             instances.remove('pred_classes')
             vis_output = image_visualizer.draw_instance_predictions(instances)
         elif mode == "video":
-            video_visualizer = VideoVisualizer(self.metadata["validation"], instance_mode=self.instance_mode)
+            video_visualizer = VideoVisualizer(metadata=self.metadata, instance_mode=self.instance_mode)
             outputs, vis_output = [], []
             while obj.isOpened():
                 success, frame = obj.read()
@@ -100,7 +98,6 @@ class Evaluator:
                     output = self.predictor(frame)
                     outputs.append(output)
                     instances = output["instances"].to("cpu")
-                    instances.remove('pred_classes')
 
                     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
